@@ -27,7 +27,7 @@ print(main_video_dirname)
 
 from face_anti_spoofing1 import check_gesture
 from crop_file import crop_save
-from id_generator import id_generator
+from id_generator import id_generator, Check_and_gen_ID
 from face_matching import verification
 
 mod = Blueprint('api',__name__)
@@ -110,12 +110,15 @@ class Get_Video_File(Resource):
 
             
             ################################ Save  Frame ##########################
-            
+            cam_04 = cv2.VideoCapture('video4.mp4')
             ret, frame = cam_04.read()
             image = imutils.resize(frame,height=280, width=280)
+            
             frame_id=request.form.get('id')
             image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+            
             crop_save(image,frame_id,path_frame)
+            
             #cv2.imwrite(path+'/frame-database/'+frame_id+'.jpg',image)
             #image = cv2.flip(image, 1)
             # img=frame.resize((280,280), Image.ANTIALIAS)
@@ -174,16 +177,21 @@ class Get_Video_File(Resource):
 
 class Get_image_for_id(Resource):
     def post(self):
-        image = request.files['image'].read()
-        npimg = np.fromstring(image, np.uint8)
-        img = cv2.imdecode(npimg,cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-        id=id_generator()
-        crop_save(img,id,path_id)
-        
+        try:
+            image = request.files['image'].read()
+            npimg = np.fromstring(image, np.uint8)
+            img = cv2.imdecode(npimg,cv2.IMREAD_COLOR)
+            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            #id=id_generator()
+            id_no=Check_and_gen_ID(path_id)
+            crop_save(img,id_no,path_id)
+            dic = {"status":200,"id":id_no}
+            return jsonify(dic)
 
-        dic = {"status":200,"id":id}
-        return jsonify(dic)
+        except Exception as e:
+            dic = {"status":444,"msg":"faliure","reason":str(e)}
+            return jsonify(dic)
+
 
 
 
